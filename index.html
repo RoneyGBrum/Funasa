@@ -171,7 +171,7 @@
       <div id="chips-macro"></div>
     </div>
     <div class="fgroup">
-      <span class="fgroup-label">Nome / Nome social</span>
+      <span class="fgroup-label">Nome Servidor</span>
       <input class="fbar-input" id="input-nome" type="text" placeholder="Buscar…" aria-label="Buscar por nome ou nome social">
     </div>
     <div class="fgroup">
@@ -181,6 +181,18 @@
     <div class="fgroup">
       <span class="fgroup-label">Situação do servidor</span>
       <select class="fbar-select" id="select-sitservidor" aria-label="Filtrar por situação do servidor"></select>
+    </div>
+    <div class="fgroup">
+      <span class="fgroup-label">Carreira</span>
+      <select class="fbar-select" id="select-carreira" aria-label="Filtrar por carreira"></select>
+    </div>
+    <div class="fgroup">
+      <span class="fgroup-label">Cargo</span>
+      <select class="fbar-select" id="select-cargo" aria-label="Filtrar por cargo"></select>
+    </div>
+    <div class="fgroup">
+      <span class="fgroup-label">UF de lotação</span>
+      <select class="fbar-select" id="select-uf" aria-label="Filtrar por UF de lotação"></select>
     </div>
     <button class="reset-btn" id="btn-reset">Limpar filtros</button>
   </div>
@@ -193,7 +205,7 @@
     <h1>Relação nominal de servidores vinculados à <em>FUNASA</em></h1>
     <p class="lede">Registro individual de cada servidor: situação do vínculo, órgão de lotação atual, órgão de exercício e a sequência de portarias que definiu sua destinação final.</p>
     <div class="hero-stats">
-      <div class="hstat" style="--tick:var(--s1)"><span class="big num" id="hero-total">0</span><span class="label">Relacionados na Portaria 881/2023</span></div>
+      <div class="hstat" style="--tick:var(--s1)"><span class="big num" id="hero-total">0</span><span class="label">Servidores relacionados na Portaria 881</span></div>
       <div class="hstat" style="--tick:var(--s3)"><span class="big num" id="hero-orgaos">0</span><span class="label">órgãos de destino distintos</span></div>
       <div class="hstat" style="--tick:var(--s6)"><span class="big num" id="hero-ufs">0</span><span class="label">UFs de lotação</span></div>
     </div>
@@ -302,7 +314,7 @@
         <table class="data-table" id="data-table">
           <thead>
             <tr>
-              <th>Nome sERVIDOR</th>
+              <th>Nome / Nome social</th>
               <th>Situação macro</th>
               <th>Órgão de lotação atual</th>
               <th>Situação do servidor</th>
@@ -411,7 +423,7 @@
   }
 
   /* ---------------- state ---------------- */
-  var state = { divisao:'todos', macro:new Set(), nome:'', orgExercicio:'todos', sitServidor:'todos', explorador:'orgLot', page:1 };
+  var state = { divisao:'todos', macro:new Set(), nome:'', orgExercicio:'todos', sitServidor:'todos', carreira:'todos', cargo:'todos', uf:'todos', explorador:'orgLot', page:1 };
   var PAGE_SIZE = 20;
 
   function passesBase(d){
@@ -422,6 +434,9 @@
       else if(d.orgExercicio!==state.orgExercicio) return false;
     }
     if(state.sitServidor!=='todos' && d.sitServidor!==state.sitServidor) return false;
+    if(state.carreira!=='todos' && d.carreira!==state.carreira) return false;
+    if(state.cargo!=='todos' && d.cargo!==state.cargo) return false;
+    if(state.uf!=='todos' && (d.uf||'')!==state.uf) return false;
     return true;
   }
   function getBase(){ return DATA.filter(passesBase); }
@@ -705,6 +720,18 @@
     sel.innerHTML=html;
     sel.addEventListener('change', function(){ state.sitServidor=sel.value; state.page=1; renderAll(); });
   }
+  function buildFilterSelect(selId, field, opts){
+    opts = opts || {};
+    var counts=countBy(DATA, field);
+    var entries=Object.keys(counts).map(function(k){ return [k,counts[k]]; });
+    if(opts.sort==='alpha') entries.sort(function(a,b){ return String(a[0]).localeCompare(String(b[0]),'pt-BR'); });
+    else entries.sort(function(a,b){ return b[1]-a[1]; });
+    var sel=document.getElementById(selId);
+    var html='<option value="todos">Todos</option>';
+    entries.forEach(function(e){ html+='<option value="'+escXml(e[0])+'">'+escXml(truncate(e[0],opts.trunc||46))+' ('+fmt(e[1])+')</option>'; });
+    sel.innerHTML=html;
+    sel.addEventListener('change', function(){ state[field]=sel.value; state.page=1; renderAll(); });
+  }
   function buildSelectExplorador(){
     var sel=document.getElementById('select-explorador');
     sel.innerHTML=EXPLORADOR_FIELDS.map(function(f){ return '<option value="'+f[0]+'">'+f[1]+'</option>'; }).join('');
@@ -717,10 +744,13 @@
     });
     document.getElementById('input-nome').addEventListener('input', function(e){ state.nome=e.target.value; state.page=1; renderAll(); });
     document.getElementById('btn-reset').addEventListener('click', function(){
-      state.divisao='todos'; state.macro=new Set(); state.nome=''; state.orgExercicio='todos'; state.sitServidor='todos'; state.page=1;
+      state.divisao='todos'; state.macro=new Set(); state.nome=''; state.orgExercicio='todos'; state.sitServidor='todos'; state.carreira='todos'; state.cargo='todos'; state.uf='todos'; state.page=1;
       document.getElementById('input-nome').value='';
       document.getElementById('select-exercicio').value='todos';
       document.getElementById('select-sitservidor').value='todos';
+      document.getElementById('select-carreira').value='todos';
+      document.getElementById('select-cargo').value='todos';
+      document.getElementById('select-uf').value='todos';
       Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(c){ c.classList.remove('active'); });
       syncSegDivisao(); renderAll();
     });
@@ -748,6 +778,9 @@
   buildChipsMacro();
   buildSelectExercicio();
   buildSelectSitServidor();
+  buildFilterSelect('select-carreira','carreira',{trunc:40});
+  buildFilterSelect('select-cargo','cargo',{trunc:40});
+  buildFilterSelect('select-uf','uf',{sort:'alpha',trunc:40});
   buildSelectExplorador();
   wireStatic();
   wireReveal();
