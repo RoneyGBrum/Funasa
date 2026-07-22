@@ -199,6 +199,9 @@
     <div class="fgroup"><span class="fgroup-label">Cargo</span><div class="ms" id="ms-cargo"></div></div>
     <div class="fgroup"><span class="fgroup-label">UF de lotação</span><div class="ms" id="ms-uf"></div></div>
     <div class="fgroup"><span class="fgroup-label">Categoria de liderança</span><div class="ms" id="ms-categoriaLid"></div></div>
+    <div class="fgroup"><span class="fgroup-label">Atividade Função</span><div class="ms" id="ms-atividadeFuncao"></div></div>
+    <div class="fgroup"><span class="fgroup-label">Nível da função</span><div class="ms" id="ms-nivelFuncao"></div></div>
+    <div class="fgroup"><span class="fgroup-label">Nível de liderança</span><div class="ms" id="ms-nivelLid"></div></div>
     <button class="reset-btn" id="btn-reset">Limpar filtros</button>
   </div>
 </div>
@@ -404,7 +407,9 @@
   }
 
   /* ---------------- state ---------------- */
-  var MS_FIELDS = ['orgLot','orgExercicio','sitServidor','carreira','cargo','uf','categoriaLid'];
+  
+  var MS_FIELDS = ['orgLot','orgExercicio','sitServidor','carreira','cargo','uf','categoriaLid','atividadeFuncao', 'nivelLid','nivelFuncao'];
+
   var MS_META = {
     orgLot:{nullLabel:null,searchable:true},
     orgExercicio:{nullLabel:'— Sem órgão de exercício —',searchable:true},
@@ -412,7 +417,10 @@
     carreira:{nullLabel:null,searchable:true},
     cargo:{nullLabel:null,searchable:true},
     uf:{nullLabel:null,searchable:true,sortAlpha:true},
-    categoriaLid:{nullLabel:'— Sem função de liderança —',searchable:false}
+    categoriaLid:{nullLabel:'— Sem função de liderança —',searchable:false},
+    atividadeFuncao:{nullLabel:'— Sem função —',searchable:true},
+    nivelFuncao:{nullLabel:'— Sem função —',searchable:true},
+    nivelLid:{nullLabel:'— Sem função de liderança —',searchable:false}
   };
   var state = { divisao:'todos', macro:new Set(), nome:'', explorador:'orgLot', page:1, sets:{} };
   var MS = {}; // component registry
